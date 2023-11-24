@@ -1,37 +1,39 @@
+# Import necessary modules from PyQt5 and other libraries
 from PyQt5 import QtCore, QtWidgets, QtGui
 from codefiles.catalog import db
 from sqlalchemy import false, text
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
-import shutil,re,os,random
+import shutil, re, os, random
 
+
+# Define the main class for the User Interface
 class Ui_MainWindow(object):
     # main functions
-
-    # Base query for retrieving book information
+    # Constructor to initialize the User Interface and related variables
     def __init__(self, user_id, is_admin, username, MainWindow):
-
-        self.base_query = "SELECT Book.name, book_publisher.quantity, Book.author, Book.price, Publisher.name,"\
-                        +"\n    ifnull(book_order.quantity, 0) as ordcount, publisher.id, Book.id, Book.picture_url"\
-                        +"\n    FROM book_publisher"\
-                        +"\n    JOIN Book ON book_publisher.book_id=Book.id"\
-                        +"\n    JOIN Publisher ON Publisher.id=book_publisher.publisher_id"\
-                        +"\n    LEFT JOIN book_order ON book_order.book_id=book.id and book_order.publisher_id=Publisher.id"\
-                        +"\n    GROUP BY Book.id, Publisher.id"
+        # Base query for retrieving book information
+        self.base_query = "SELECT Book.name, book_publisher.quantity, Book.author, Book.price, Publisher.name," \
+                          + "\n    ifnull(book_order.quantity, 0) as ordcount, publisher.id, Book.id, Book.picture_url" \
+                          + "\n    FROM book_publisher" \
+                          + "\n    JOIN Book ON book_publisher.book_id=Book.id" \
+                          + "\n    JOIN Publisher ON Publisher.id=book_publisher.publisher_id" \
+                          + "\n    LEFT JOIN book_order ON book_order.book_id=book.id and book_order.publisher_id=Publisher.id" \
+                          + "\n    GROUP BY Book.id, Publisher.id"
 
         # Query to retrieve user information
-        self.user_query = "SELECT User.id, User.username, Customer.first_name, Customer.last_name, Customer.address, "\
-                        +"\n    Customer.phone_number, User.is_admin, ifnull(SUM(book_order.quantity), 0) AS total, User.date_JOINed"\
-                        +"\n    FROM User "\
-                        +"\n    JOIN Customer ON User.id=Customer.user_id"\
-                        +"\n    LEFT JOIN book_order ON book_order.customer_id=User.id"\
-                        +"\n    GROUP BY User.username"
-
-        self.MainWindow = MainWindow   
+        self.user_query = "SELECT User.id, User.username, Customer.first_name, Customer.last_name, Customer.address, " \
+                          + "\n    Customer.phone_number, User.is_admin, ifnull(SUM(book_order.quantity), 0) AS total, User.date_JOINed" \
+                          + "\n    FROM User " \
+                          + "\n    JOIN Customer ON User.id=Customer.user_id" \
+                          + "\n    LEFT JOIN book_order ON book_order.customer_id=User.id" \
+                          + "\n    GROUP BY User.username"
+        # Initialize variables related to the main window
+        self.MainWindow = MainWindow
         self.user_id = user_id
         self.username = username
-        self.is_admin = is_admin      
+        self.is_admin = is_admin
         self.bookSearch = None
         self.userSearch = None
         self.bookObjects = None
@@ -45,86 +47,103 @@ class Ui_MainWindow(object):
 
     # Logs out the user by setting up the login window.
     def logout(self):
+        # Import the login window UI class
         from codefiles.user_registration import Ui_LoginWindow
+        # Create an instance of the login window UI and set it up
         ui = Ui_LoginWindow()
         ui.setupUi(self.MainWindow)
 
+    # Logs out the user by setting up the login window.
     def logout(self):
+        # Import the login window UI class
         from codefiles.user_registration import Ui_LoginWindow
+        # Create an instance of the login window UI and set it up
         ui = Ui_LoginWindow()
         ui.setupUi(self.MainWindow)
 
     # Displays a message box with the specified type, title, and text.
-    def OkMsgBox(self,type, title, text):
+    def OkMsgBox(self, type, title, text):
+        # Create a QMessageBox instance
         msg = QMessageBox()
+        # Set the icon based on the specified type (warning or information)
         if type == 'warning':
             msg.setIcon(QMessageBox.Warning)
         else:
             msg.setIcon(QMessageBox.Information)
+        # Set the text and title of the message box
         msg.setText(text)
         msg.setWindowTitle(title)
+        # Set standard buttons (only OK button in this case)
         msg.setStandardButtons(QMessageBox.Ok)
+        # Execute the message box
         msg.exec_()
 
     # Retrieves a list of publishers from the database.
     def getPublishers(self):
+        # SQL query to retrieve names of publishers from the database
         query = "SELECT name FROM Publisher"
+        # Execute the query and return a list of publisher names
         return [res[0] for res in list(db.engine.execute(text(query)))]
 
     # Dynamically places checkboxes for categories in the UI based on provided parameters.
     def placeCatBoxes(self, tab, x, y, w, h):
-
+        # SQL query to retrieve category names from the database
         query = "SELECT name FROM category"
         catResult = list(db.engine.execute(text(query)))
-
-        for index, cat in enumerate(catResult):    
-
-            if tab == 0:          
+        # Iterate through the list of category names
+        for index, cat in enumerate(catResult):
+            # Check if the checkboxes should be placed on the main tab (tab == 0)
+            if tab == 0:
+                # Adjust the position based on the index to create a grid layout
                 if index % 3 == 0:
                     x += 111
                     y = 18
                 elif index % 3 == 1:
                     y = 43
                 else:
-                    y = 68       
-
+                    y = 68
+                    # Create a checkbox and set its properties
                 self.bookCatBoxes.append(QtWidgets.QCheckBox(self.frame_list_main))
                 self.bookCatBoxes[index].setObjectName(cat[0])
                 self.bookCatBoxes[index].setGeometry(QtCore.QRect(x, y, w, h))
-            else:  
+            else:
+                # Adjust the position based on the index to create a grid layout
                 if index % 2 == 0:
                     x += 100
                     y = 2
                 else:
-                    y = 32 
-
+                    y = 32
+                    # Create a checkbox and set its properties
                 self.categoryBoxes.append(QtWidgets.QCheckBox(self.scrollAreaWidgetContents_addbook_main))
-                self.categoryBoxes[index].setObjectName(cat[0])           
+                self.categoryBoxes[index].setObjectName(cat[0])
                 self.categoryBoxes[index].setGeometry(QtCore.QRect(x, y, w, h))
 
     # Fills the UI with book information based on the provided query.
     def fillBooks(self, query):
-
+        # Lists to store buttons and other objects dynamically created
         detailBtns = []
         buyEditBtns = []
         deleteBtns = []
         self.bookObjects = []
         self.pictures = []
-
+        # Retrieve book information from the database based on the provided query
         books = list(db.engine.execute(text(query)))
-
+        # Iterate through each book and create UI elements for display
         for index, item in enumerate(books):
+            # Create a frame to contain book information
             self.bookObjects.append(QtWidgets.QFrame(self.scrollAreaWidgetContents))
             self.bookObjects[index].setMaximumSize(QtCore.QSize(485, 150))
             self.bookObjects[index].setFrameShape(QtWidgets.QFrame.StyledPanel)
             self.bookObjects[index].setFrameShadow(QtWidgets.QFrame.Raised)
             self.bookObjects[index].setObjectName("frame_list_" + str(index))
+            # Create a grid layout within the frame
             self.gridLayoutWidget = QtWidgets.QWidget(self.bookObjects[index])
             self.gridLayoutWidget.setGeometry(QtCore.QRect(9, 9, 471, 136))
             self.gridLayoutWidget.setObjectName("gridLayoutWidget")
             self.gridLayout_list_0 = QtWidgets.QGridLayout(self.gridLayoutWidget)
             self.gridLayout_list_0.setContentsMargins(0, 0, 0, 0)
             self.gridLayout_list_0.setObjectName("gridLayout_list_0")
+            # Create labels to display book information
             self.label_list_name_0 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_list_name_0.setObjectName("label_list_name_0")
             self.gridLayout_list_0.addWidget(self.label_list_name_0, 0, 0, 1, 1)
@@ -141,13 +160,15 @@ class Ui_MainWindow(object):
             self.label_list_publisher_0.setObjectName("label_list_publisher_0")
             self.gridLayout_list_0.addWidget(self.label_list_publisher_0, 3, 0, 1, 1)
             # detail buttons
+            # Create detail buttons and connect them to the bookDetails method
             detailBtns.append(QtWidgets.QPushButton(self.gridLayoutWidget))
             detailBtns[index].setObjectName(str(item[7]))
             self.gridLayout_list_0.addWidget(detailBtns[index], 6, 0, 1, 1)
             detailBtns[index].clicked.connect(lambda ch, index=index: self.bookDetails(detailBtns[index].objectName()))
+            # Set the text and style for detail buttons
             detailBtns[index].setText("📖 Get Extra Information")
-            detailBtns[index].setStyleSheet("#"+str(detailBtns[index].objectName())+" {color:purple;}")
-            # purchase/edit buttons
+            detailBtns[index].setStyleSheet("#" + str(detailBtns[index].objectName()) + " {color:purple;}")
+            # Create purchase/edit buttons and connect them to the appropriate methods
             buyEditBtns.append(QtWidgets.QPushButton(self.gridLayoutWidget))
             buyEditBtns[index].setObjectName(str(item[7]) + '_' + str(item[6]))
             self.gridLayout_list_0.addWidget(buyEditBtns[index], 6, 2, 1, 1)
@@ -156,37 +177,44 @@ class Ui_MainWindow(object):
                 deleteBtns.append(QtWidgets.QPushButton(self.gridLayoutWidget))
                 deleteBtns[index].setObjectName(str(item[7]))
                 self.gridLayout_list_0.addWidget(deleteBtns[index], 6, 4, 1, 1)
-                deleteBtns[index].clicked.connect(lambda ch, index=index: self.deleteBook(deleteBtns[index].objectName()))
+                deleteBtns[index].clicked.connect(
+                    lambda ch, index=index: self.deleteBook(deleteBtns[index].objectName()))
                 deleteBtns[index].setText("🚮 Delete")
-                deleteBtns[index].setStyleSheet("#"+str(deleteBtns[index].objectName())+" {color:green;}")
-                buyEditBtns[index].clicked.connect(lambda ch, index=index: self.editBook(buyEditBtns[index].objectName().split('_')[0],self.MainWindow))
+                deleteBtns[index].setStyleSheet("#" + str(deleteBtns[index].objectName()) + " {color:green;}")
+                buyEditBtns[index].clicked.connect(
+                    lambda ch, index=index: self.editBook(buyEditBtns[index].objectName().split('_')[0],
+                                                          self.MainWindow))
                 buyEditBtns[index].setText("📝 Edit")
-                buyEditBtns[index].setStyleSheet("#"+str(buyEditBtns[index].objectName())+" {color:blue;}")
+                buyEditBtns[index].setStyleSheet("#" + str(buyEditBtns[index].objectName()) + " {color:blue;}")
             else:
                 buyEditBtns[index].clicked.connect(lambda ch, index=index:
-                            self.buyBook(buyEditBtns[index].objectName().split('_')[0], buyEditBtns[index].objectName().split('_')[1]))
+                                                   self.buyBook(buyEditBtns[index].objectName().split('_')[0],
+                                                                buyEditBtns[index].objectName().split('_')[1]))
                 buyEditBtns[index].setText("🛍️ Purchase")
-            # picture
+            # Create a QGraphicsView to display book pictures
             self.gridLayout_5.addWidget(self.bookObjects[index], index, 1, 1, 1)
             self.pictures.append(QtWidgets.QGraphicsView(self.scrollAreaWidgetContents))
             self.pictures[index].setMinimumSize(QtCore.QSize(220, 150))
             self.pictures[index].setMaximumSize(QtCore.QSize(220, 150))
-            self.pictures[index].setStyleSheet("#list_picture_"+str(index)+
-            " { background-image: url(pictures/"+ item[8] +
-            ");background-repeat: no-repeat;background-attachment: fixed;background-position: center;border:0px;}")
+            self.pictures[index].setStyleSheet("#list_picture_" + str(index) +
+                                               " { background-image: url(pictures/" + item[8] +
+                                               ");background-repeat: no-repeat;background-attachment: fixed;background-position: center;border:0px;}")
             # self.pictures[index].setStyleSheet("#list_picture_"+str(index)+" { background-image: url(pictures/book.jpeg);background-repeat: no-repeat;background-attachment: fixed;background-position: center;border:0px;}")
-            self.pictures[index].setObjectName("list_picture_" + str(index))        
+            self.pictures[index].setObjectName("list_picture_" + str(index))
+            # Add the created UI elements to the main layout
             self.gridLayout_5.addWidget(self.pictures[index], index, 0, 1, 1)
-            # giving values
+            # Set values for the labels to display book information
             self.label_list_name_0.setText('📘 Title: ' + item[0])
             self.label_list_quantity_0.setText('📊  Number of Books available: ' + str('{:,}'.format(item[1])))
             self.label_list_author_0.setText('🖋️ Author: ' + item[2])
-            self.label_list_price_0.setText('💵 Price: ' + "RM"  + str('{:,}'.format(item[3])))
+            self.label_list_price_0.setText('💵 Price: ' + "RM" + str('{:,}'.format(item[3])))
             self.label_list_publisher_0.setText('📁 Publisher: ' + item[4])
 
     # Displays detailed information about a book in a separate window.
     def bookDetails(self, book_id):
+        # Import the BookDetailWindow UI class
         from codefiles.Book_Details import Ui_BookDetailWindow
+        # Create an instance of the BookDetailWindow UI and set it up
         self.bookDetailUi = QtWidgets.QMainWindow()
         ui_book_detail = Ui_BookDetailWindow(book_id)
         ui_book_detail.setupUi(self.bookDetailUi)
@@ -194,68 +222,80 @@ class Ui_MainWindow(object):
 
     # Updates the main window of the application.
     def update_main_window(main_self):
-        self = main_self   
+        # Update the main window UI
+        self = main_self
         self.setupUi(self.MainWindow)
 
     # Opens a window to edit book details.
-    def editBook(self, book_id,MainWindow):
+    def editBook(self, book_id, MainWindow):
+        # Import the BookEditWindow UI class
         from codefiles.edit_books_features import Ui_BookEditWindow
+        # Create an instance of the BookEditWindow UI and set it up
         self.MainWindow = MainWindow
         self.bookEditUi = QtWidgets.QMainWindow()
-        ui_book_detail = Ui_BookEditWindow(book_id,self)
+        ui_book_detail = Ui_BookEditWindow(book_id, self)
         ui_book_detail.setupUi(self.bookEditUi)
         self.bookEditUi.show()
 
         # Handles the process of buying a book:- Checks availability, Manages user orders, updates book quantity
         # Displays appropriate messages and refreshes the UI upon successful purchase
-    def buyBook(self, book_id, publisher_id):
-        
-        query = "SELECT book_publisher.quantity FROM Book JOIN book_publisher"\
-                +"\n    ON Book.id=book_publisher.book_id"\
-                +f"\n   WHERE Book.id={book_id}"
-        quantity = list(db.engine.execute(text(query)))[0][0]
 
+    def buyBook(self, book_id, publisher_id):
+        # Query to check the quantity of the selected book
+        query = "SELECT book_publisher.quantity FROM Book JOIN book_publisher" \
+                + "\n    ON Book.id=book_publisher.book_id" \
+                + f"\n   WHERE Book.id={book_id}"
+        quantity = list(db.engine.execute(text(query)))[0][0]
+        # Query to retrieve the user ID based on the username
         query = f"SELECT User.id FROM User WHERE username='{self.username}'"
         user_id = list(db.engine.execute(text(query)))[0][0]
-
+        # Check if the book is available
         if quantity != 0:
-            query = "SELECT book_order.quantity FROM book_order WHERE"\
-                    +f"\n  book_order.book_id={book_id} and book_order.customer_id={user_id}"
+            # Check if the user has already ordered the book
+            query = "SELECT book_order.quantity FROM book_order WHERE" \
+                    + f"\n  book_order.book_id={book_id} and book_order.customer_id={user_id}"
             try:
                 userOrderQuantity = list(db.engine.execute(text(query)))[0][0]
-                query = f"UPDATE book_order SET quantity={userOrderQuantity+1}"\
-                       +f"\n  WHERE book_id={book_id} and customer_id={user_id}"
+                # If the user has ordered the book, update the quantity
+                query = f"UPDATE book_order SET quantity={userOrderQuantity + 1}" \
+                        + f"\n  WHERE book_id={book_id} and customer_id={user_id}"
                 db.engine.execute(text(query))
                 self.OkMsgBox("information", "success", "order added sucessfully!")
             except:
-                query = "INSERT INTO book_order(book_id, customer_id, publisher_id, quantity)"\
-                       +f"\n  VALUES({book_id}, {user_id}, {publisher_id}, 1)"
+                # If the user has not ordered the book, add a new order entry
+                query = "INSERT INTO book_order(book_id, customer_id, publisher_id, quantity)" \
+                        + f"\n  VALUES({book_id}, {user_id}, {publisher_id}, 1)"
                 db.engine.execute(text(query))
-
-            query = f"UPDATE book_publisher SET quantity={quantity-1} WHERE book_id={book_id}"
+            # Update the book quantity after a successful order
+            query = f"UPDATE book_publisher SET quantity={quantity - 1} WHERE book_id={book_id}"
             db.engine.execute(text(query))
             self.OkMsgBox("information", "order success", "Order added sucessfully!")
+            # Refresh the UI
             self.setupUi(self.MainWindow)
-    
+
         else:
+            # Display a warning if the book is unavailable
             self.OkMsgBox("warning", "order fail", "Book is unavailable!")
 
     # Deletes a book and its related records from the database.
     def deleteBook(self, book_id):
+        # SQL queries to delete records related to the book from different tables
         queries = [
             f"DELETE FROM Book WHERE Book.id={book_id}",
             f"DELETE FROM book_publisher WHERE book_publisher.book_id={book_id}",
             f"DELETE FROM book_category WHERE book_category.book_id={book_id}",
             f"DELETE FROM book_order WHERE book_order.book_id={book_id}"
         ]
-
+        # Execute each deletion query
         for query in queries:
             db.engine.execute(text(query))
+        # Display success message, refresh the UI, and update the main window
         self.OkMsgBox("information", "success", "book deleted sucessfully!")
         self.setupUi(self.MainWindow)
 
     # Removes book-related UI objects from the main window.
     def removeBooks(self):
+        # Delete dynamically created UI objects related to books
         for obj in self.bookObjects:
             obj.deleteLater()
 
@@ -263,15 +303,18 @@ class Ui_MainWindow(object):
             pic.deleteLater()
 
     # Searches for books based on the given input.
-    def search(self, input):    
+    def search(self, input):
+        # Check if input is provided
         if input:
+            # Set the search input and filter books based on the input
             self.input_list_search.setText(input)
-            self.bookSearch = f"Book.name LIKE '%{input}%' OR Book.author LIKE '%{input}%' OR Publisher.name LIKE '%{input}%'" 
+            self.bookSearch = f"Book.name LIKE '%{input}%' OR Book.author LIKE '%{input}%' OR Publisher.name LIKE '%{input}%'"
             self.removeBooks()
-            self.fillBooks(self.base_query + f"\n HAVING " +  self.bookSearch)
+            self.fillBooks(self.base_query + f"\n HAVING " + self.bookSearch)
             self.reloadFilters()
-            
+
         else:
+            # If no input is provided, reset the search and display all books
             self.input_list_search.setText('')
             self.bookSearch = None
             self.removeBooks()
@@ -280,52 +323,56 @@ class Ui_MainWindow(object):
 
     # Filters books based on selected categories, filters, and publishers.
     def bookFilter(self):
-
+        # Lists to store selected categories
         selectedCategories = []
-
+        # Iterate through book category checkboxes to find selected ones
         for cat in self.bookCatBoxes:
             if cat.isChecked():
                 selectedCategories.append(cat.objectName())
-
+        # Get selected filter, publisher, and initialize a flag
         selectedFilter = self.bookCombo.currentText()
         selectedPublisher = self.pubCombo1.currentText()
 
         donothing = False
-
+        # Check if categories are selected
         if selectedCategories:
-
-            convertedList = f"('{selectedCategories[0]}')" if len(selectedCategories) == 1 else tuple(selectedCategories)
-            
-            query = f"SELECT Book.name,book_publisher.quantity,Book.author,Book.price,Publisher.name,"\
-                    +"\n    ifnull(book_order.quantity, 0) as ordcount, publisher.id, Book.id, Book.picture_url"\
-                    +"\n    FROM book_category"\
-                    +"\n    JOIN Book ON Book.id=book_category.book_id"\
-                    +"\n    JOIN Category ON Category.id=book_category.category_id"\
-                    +"\n    JOIN book_publisher ON book_publisher.book_id=Book.id"\
-                    +"\n    JOIN Publisher ON Publisher.id=book_publisher.publisher_id"\
-                    +"\n    LEFT JOIN book_order ON book_order.book_id=book.id and book_order.publisher_id=Publisher.id"\
-                    +f"\n   GROUP BY Book.id, Publisher.id HAVING Category.name IN {convertedList}"
-
+            # Format the selected categories for SQL query
+            convertedList = f"('{selectedCategories[0]}')" if len(selectedCategories) == 1 else tuple(
+                selectedCategories)
+            # Construct a query to filter books based on selected categories
+            query = f"SELECT Book.name,book_publisher.quantity,Book.author,Book.price,Publisher.name," \
+                    + "\n    ifnull(book_order.quantity, 0) as ordcount, publisher.id, Book.id, Book.picture_url" \
+                    + "\n    FROM book_category" \
+                    + "\n    JOIN Book ON Book.id=book_category.book_id" \
+                    + "\n    JOIN Category ON Category.id=book_category.category_id" \
+                    + "\n    JOIN book_publisher ON book_publisher.book_id=Book.id" \
+                    + "\n    JOIN Publisher ON Publisher.id=book_publisher.publisher_id" \
+                    + "\n    LEFT JOIN book_order ON book_order.book_id=book.id and book_order.publisher_id=Publisher.id" \
+                    + f"\n   GROUP BY Book.id, Publisher.id HAVING Category.name IN {convertedList}"
+        # If no categories are selected, set the query to the base query
         else:
             query = self.base_query
+            # Check if no filter, publisher, or search is selected
             if selectedFilter == 'select filter' and selectedPublisher == 'select publisher':
                 donothing = True
-                if self.bookSearch:                  
-                    query = self.base_query + f"\n HAVING " +  self.bookSearch
+                # If a search query exists, add it to the query
+                if self.bookSearch:
+                    query = self.base_query + f"\n HAVING " + self.bookSearch
                 else:
                     query = self.base_query
-               
 
+        # Check if further actions are needed
         if not donothing:
+            # If a search query exists, add it to the query
             if self.bookSearch:
                 query += f" AND ({self.bookSearch})"
-        
+            # If a publisher is selected, add it to the query
             if selectedPublisher != 'select publisher':
                 if selectedCategories:
                     query += f" AND Publisher.name='{selectedPublisher}'"
                 else:
                     query += f"\n   HAVING Publisher.name='{selectedPublisher}'"
-
+            # If a filter is selected, add sorting to the query
             if selectedFilter != 'select filter':
                 if selectedFilter == 'most popular':
                     query += "\n ORDER BY ordcount DESC"
@@ -339,16 +386,17 @@ class Ui_MainWindow(object):
                     query += "\n ORDER BY Book.date_added DESC"
                 else:
                     query += "\n ORDER BY Book.date_added"
-    
-        
+
+        # Remove existing book UI elements and fill the UI with filtered books
         self.removeBooks()
         self.fillBooks(query)
 
     # Resets filter options in the UI for books and publishers.
     def reloadFilters(self):
+        # Reset filter options to default values
         self.bookCombo.setCurrentText('select filter')
         self.pubCombo1.setCurrentText('select publisher')
-
+        # Uncheck all category checkboxes
         for cat in self.bookCatBoxes:
             cat.setChecked(False)
 
@@ -387,7 +435,7 @@ class Ui_MainWindow(object):
 
     # Adds a new book to the database along with related details.
     def addBook(self):
-        
+
         inputDict = {
             'name': self.input_publisher_name_2.text(),
             'author': self.input_publisher_author.text(),
@@ -397,7 +445,7 @@ class Ui_MainWindow(object):
             'publisher': self.select_addbook_publisher.currentText(),
             'image_url': self.input_addbook_picture.text()
         }
-        
+
         if not '' in inputDict.values():
 
             query = f"SELECT id FROM Book WHERE name='{inputDict['name']}'"
@@ -406,7 +454,7 @@ class Ui_MainWindow(object):
             publisher_id = list(db.engine.execute(text(query)))[0][0]
 
             if matchedIds:
-                for mid in matchedIds:                    
+                for mid in matchedIds:
                     query = f"SELECT EXISTS(SELECT * FROM book_publisher WHERE book_id={mid[0]} and publisher_id={publisher_id})"
                     result = list(db.engine.execute(query))[0][0]
                     if result == 0:
@@ -417,29 +465,28 @@ class Ui_MainWindow(object):
             else:
                 bookExists = False
 
-           
             if bookExists:
                 self.OkMsgBox("warning", "fail", "another book with this name and publisher found!")
-            
+
             elif not inputDict['price'].isdigit():
                 self.OkMsgBox("warning", "fail", "wrong price input!")
 
             elif not inputDict['quantity'].isdigit():
                 self.OkMsgBox("warning", "fail", "wrong quantity input!")
 
-            else:      
+            else:
                 try:
-                    url = str(random.randint(9999,9999999))+"_"+os.path.basename(inputDict['image_url'])
+                    url = str(random.randint(9999, 9999999)) + "_" + os.path.basename(inputDict['image_url'])
                     shutil.copy(inputDict['image_url'], f"pictures/{url}")
 
-                    query = f"INSERT INTO book(name, author, picture_url, price, description)"\
-                            +f"\n   VALUES('{inputDict['name']}', '{inputDict['author']}', '{url}',"\
-                            +f" {inputDict['price']}, '{inputDict['description']}')"
+                    query = f"INSERT INTO book(name, author, picture_url, price, description)" \
+                            + f"\n   VALUES('{inputDict['name']}', '{inputDict['author']}', '{url}'," \
+                            + f" {inputDict['price']}, '{inputDict['description']}')"
                     db.engine.execute(text(query))
                     query = f"SELECT id FROM Book WHERE name='{inputDict['name']}' ORDER BY date_added DESC LIMIT 1"
                     insertedBook_id = list(db.engine.execute(text(query)))[0][0]
-                    query = f"INSERT INTO book_publisher(book_id, publisher_id, quantity)"\
-                            +f"\n   VALUES({insertedBook_id}, {publisher_id}, {inputDict['quantity']})"
+                    query = f"INSERT INTO book_publisher(book_id, publisher_id, quantity)" \
+                            + f"\n   VALUES({insertedBook_id}, {publisher_id}, {inputDict['quantity']})"
                     db.engine.execute(text(query))
 
                     for cat in self.categoryBoxes:
@@ -449,7 +496,6 @@ class Ui_MainWindow(object):
                             query = f"INSERT INTO book_category(book_id, category_id) VALUES({insertedBook_id}, {category_id})"
                             db.engine.execute(text(query))
 
-                    
                     self.removeBooks()
                     self.fillBooks(self.base_query)
 
@@ -467,21 +513,22 @@ class Ui_MainWindow(object):
     # populates user-related information in the UI based on the query results.
     # Generates UI elements for each user, displaying their details and action buttons.
     def fillUsers(self, query):
+        # Fetch user information from the database based on the query
         users = list(db.engine.execute(text(query)))
-
+        # Lists to store dynamically created UI elements
         self.userObjects = []
         deleteButtons = []
         updateButtons = []
-    
-        for index, item in enumerate(users):   
-            
+        # Iterate through each user and create UI elements
+        for index, item in enumerate(users):
+            # Create a frame to hold user details and buttons
             self.userObjects.append(QtWidgets.QFrame(self.scrollAreaWidgetContents_user_main))
-            self.userObjects[index].setMinimumSize(QtCore.QSize(839, 65))   
-            self.userObjects[index].setMaximumSize(QtCore.QSize(839, 65)) 
+            self.userObjects[index].setMinimumSize(QtCore.QSize(839, 65))
+            self.userObjects[index].setMaximumSize(QtCore.QSize(839, 65))
             self.userObjects[index].setFrameShape(QtWidgets.QFrame.StyledPanel)
-            self.userObjects[index].setFrameShadow(QtWidgets.QFrame.Raised)  
+            self.userObjects[index].setFrameShadow(QtWidgets.QFrame.Raised)
             self.userObjects[index].setObjectName("frame_user_" + str(index))
-
+            # Create a grid layout for the user details and buttons
             self.gridLayoutWidget_5 = QtWidgets.QWidget(self.userObjects[index])
             self.gridLayoutWidget_5.setGeometry(QtCore.QRect(10, 10, 821, 52))
             self.gridLayoutWidget_5.setObjectName("gridLayoutWidget_5")
@@ -489,12 +536,12 @@ class Ui_MainWindow(object):
             self.gridLayout_user_0 = QtWidgets.QGridLayout(self.gridLayoutWidget_5)
             self.gridLayout_user_0.setContentsMargins(0, 0, 0, 0)
             self.gridLayout_user_0.setObjectName("gridLayout_user_0")
-
+            # Create buttons for updating and deleting users
             updateButtons.append(QtWidgets.QPushButton(self.gridLayoutWidget_5))
             updateButtons[index].setMaximumSize(QtCore.QSize(55, 16777215))
             deleteButtons.append(QtWidgets.QPushButton(self.gridLayoutWidget_5))
             deleteButtons[index].setMaximumSize(QtCore.QSize(55, 16777215))
-            
+
             self.gridLayout_user_0.addWidget(updateButtons[index], 0, 6, 1, 1)
             self.label_user_address_0 = QtWidgets.QLabel(self.gridLayoutWidget_5)
             self.label_user_address_0.setMinimumSize(QtCore.QSize(100, 0))
@@ -527,16 +574,16 @@ class Ui_MainWindow(object):
             self.label_user_name_0.setMaximumSize(QtCore.QSize(83, 50))
             self.label_user_name_0.setObjectName("label_user_name_0")
             self.gridLayout_user_0.addWidget(self.label_user_name_0, 0, 0, 1, 1)
-            
-            self.gridLayout_9.addWidget(self.userObjects[index], index+1 , 0, 1, 1, QtCore.Qt.AlignTop)
-            
+
+            self.gridLayout_9.addWidget(self.userObjects[index], index + 1, 0, 1, 1, QtCore.Qt.AlignTop)
+
             self.label_user_phone_0.setText(item[5])
             self.label_user_lastname_0.setText(item[3])
             self.label_user_name_0.setText(item[2])
             self.label_user_username_0.setText(item[1])
-            self.label_user_address_0.setText(item[4])         
+            self.label_user_address_0.setText(item[4])
             deleteButtons[index].setText("Delete")
-            
+
             if item[6] == 1:
                 self.label_user_isadmin_0.setText('yes')
                 updateButtons[index].setText('Demote')
@@ -548,41 +595,45 @@ class Ui_MainWindow(object):
 
             deleteButtons[index].setObjectName('delete_' + str(item[0]))
 
-            updateButtons[index].clicked.connect(lambda ch, index=index: 
-                        self.updateUser(updateButtons[index].objectName().split('_')[0], updateButtons[index].objectName().split('_')[1]))
+            updateButtons[index].clicked.connect(lambda ch, index=index:
+                                                 self.updateUser(updateButtons[index].objectName().split('_')[0],
+                                                                 updateButtons[index].objectName().split('_')[1]))
             deleteButtons[index].clicked.connect(lambda ch, index=index:
-                        self.deleteUser(updateButtons[index].objectName().split('_')[1]))
+                                                 self.deleteUser(updateButtons[index].objectName().split('_')[1]))
 
     # Search for users based on input criteria
     def usersSearch(self, input):
+        # Check if input is provided
         if input:
+            # Set the search input and filter users based on the input
             self.input_user_search.setText(input)
-            self.userSearch = f"User.username LIKE '%{input}%' OR Customer.first_name LIKE '%{input}%' OR Customer.last_name LIKE '%{input}%'" 
+            self.userSearch = f"User.username LIKE '%{input}%' OR Customer.first_name LIKE '%{input}%' OR Customer.last_name LIKE '%{input}%'"
             self.removeUsers()
-            self.fillUsers(self.user_query + f"\n HAVING " +  self.userSearch)
+            self.fillUsers(self.user_query + f"\n HAVING " + self.userSearch)
             self.usersCombo.setCurrentText('select filter')
-            
+
         else:
+            # If no input is provided, reset the search and display all users
             self.input_user_search.setText('')
             self.userSearch = None
             self.removeUsers()
             self.fillUsers(self.user_query)
-            # self.setupUi(MainWindow)  
+            # self.setupUi(MainWindow)
 
     # Apply filters to user data based on selected criteria
     def userFilter(self):
-        
+        # Get the selected filter option
         selectedFilter = self.usersCombo.currentText()
         query = self.user_query
-
+        # Set the base query or the query with search criteria
         if self.userSearch:
-            q = query + "\n HAVING " +  self.userSearch
+            q = query + "\n HAVING " + self.userSearch
         else:
             q = query
-       
+        # Apply filters based on the selected option
         if selectedFilter != 'select filter':
             if selectedFilter == 'admin':
-                query = q + " AND User.is_admin=1" if self.userSearch else q + "\n  HAVING User.is_admin=1"                                        
+                query = q + " AND User.is_admin=1" if self.userSearch else q + "\n  HAVING User.is_admin=1"
             elif selectedFilter == 'most_loyal':
                 query = q + "\n ORDER BY Total DESC"
             elif selectedFilter == 'least_loyal':
@@ -591,7 +642,7 @@ class Ui_MainWindow(object):
                 query = q + "\n ORDER BY User.date_JOINed DESC"
             else:
                 query = q + "\n ORDER BY User.date_JOINed"
-
+        # Remove existing user objects and fill the UI with the updated query results
         self.removeUsers()
         self.fillUsers(query)
 
@@ -601,17 +652,17 @@ class Ui_MainWindow(object):
             obj.deleteLater()
 
     # Delete a user from the database
-    def deleteUser(self, id):     
-
+    def deleteUser(self, id):
+        # Prepare SQL queries to delete user-related records from the database
         queries = [
             f"DELETE FROM User WHERE id={id}",
             f"DELETE FROM Customer WHERE user_id={id}",
             f"DELETE FROM book_order WHERE customer_id={id}"
         ]
-
+        # Execute the queries
         for query in queries:
             db.engine.execute(text(query))
-
+        # Show a success message and update the UI
         # self.removeUsers()
         self.OkMsgBox("information", "success", "Great user deleted sucessfully!")
         self.setupUi(self.MainWindow)
@@ -619,20 +670,21 @@ class Ui_MainWindow(object):
 
     # Update user privilege based on action ('promote' or 'demote')
     def updateUser(self, action, id):
+        # Determine the new admin status based on the action
         is_admin = 1 if action == 'promote' else 0
-        
+        # Update the user's admin status in the database
         query = f"UPDATE User SET is_admin={is_admin} WHERE id={id}"
         db.engine.execute(text(query))
-
+        # Show a success message and update the UI
         self.OkMsgBox("information", "success", "Great user updates sucessfully!")
         self.removeUsers()
         self.fillUsers(self.user_query)
 
     # Fill in inventory data in the UI using various queries
     def fillInventory(self):
-        
+        # Lists to store dynamically created UI elements
         objects = []
-
+        # Titles and corresponding SQL queries for inventory data
         titles = [
             '📊 Books Count ',
             '📊 Count of Books Sold ',
@@ -644,22 +696,22 @@ class Ui_MainWindow(object):
             "SELECT SUM(quantity) FROM book_order",
             "SELECT SUM(price) FROM Book",
             "SELECT SUM(Book.price) FROM Book JOIN book_order ON Book.id=book_order.book_id",
-            
-            "SELECT SUM(Book.price) FROM Book JOIN book_order ON Book.id=book_order.book_id"\
-            +"\n    WHERE book_order.date_added>=(SELECT DATETIME('now', '-7 day'))",
 
-            "SELECT SUM(Book.price) FROM Book JOIN book_order ON Book.id=book_order.book_id"\
-            +"\n    WHERE book_order.date_added>=(SELECT DATETIME('now', '-30 day'))"
+            "SELECT SUM(Book.price) FROM Book JOIN book_order ON Book.id=book_order.book_id" \
+            + "\n    WHERE book_order.date_added>=(SELECT DATETIME('now', '-7 day'))",
+
+            "SELECT SUM(Book.price) FROM Book JOIN book_order ON Book.id=book_order.book_id" \
+            + "\n    WHERE book_order.date_added>=(SELECT DATETIME('now', '-30 day'))"
 
         ]
-
+        # Iterate through each inventory item and create UI elements
         for index in range(0, len(titles)):
 
             objects.append(QtWidgets.QFrame(self.verticalLayoutWidget))
             objects[index].setFrameShape(QtWidgets.QFrame.StyledPanel)
             objects[index].setFrameShadow(QtWidgets.QFrame.Raised)
             objects[index].setObjectName("frame_inventory")
-
+            # Create labels for inventory details
             self.label_inventory_title_0 = QtWidgets.QLabel(objects[index])
             self.label_inventory_title_0.setGeometry(QtCore.QRect(20, 10, 200, 41))
             self.label_inventory_title_0.setObjectName("label_inventory_title")
@@ -667,13 +719,13 @@ class Ui_MainWindow(object):
             self.label_inventory_0 = QtWidgets.QLabel(objects[index])
             self.label_inventory_0.setGeometry(QtCore.QRect(250, 10, 180, 40))
             self.label_inventory_0.setObjectName("label_inventory_0")
-
-            self.verticalLayout_inventory_main.addWidget(objects[index]) 
-
+            # Add the frame to the layout
+            self.verticalLayout_inventory_main.addWidget(objects[index])
+            # Fetch and display the inventory data
             qResult = list(db.engine.execute(queries[index]))[0][0]
 
-            self.label_inventory_title_0.setText(titles[index]) 
-            if index>1:
+            self.label_inventory_title_0.setText(titles[index])
+            if index > 1:
                 qResult = '{:,}'.format(qResult)
                 self.label_inventory_0.setText(str(qResult) + "RM")
             else:
@@ -682,19 +734,19 @@ class Ui_MainWindow(object):
 
     # Fill the orders table in the UI based on user privileges
     def fillOrders(self):
-
-        query = "SELECT Book.name, User.username, Publisher.name, book_order.date_added, book_order.quantity, Book.price"\
-                +"\n    FROM book_publisher"\
-                +"\n    JOIN Book on book_publisher.book_id=Book.id"\
-                +"\n    JOIN Publisher on Publisher.id=book_publisher.publisher_id"\
-                +"\n    JOIN book_order on book_order.book_id=book.id and book_order.publisher_id=Publisher.id"\
-                +"\n    JOIN Customer on customer.user_id=book_order.customer_id"\
-                +"\n    JOIN User on User.id=Customer.user_id"
-        
+        # SQL query to fetch order details
+        query = "SELECT Book.name, User.username, Publisher.name, book_order.date_added, book_order.quantity, Book.price" \
+                + "\n    FROM book_publisher" \
+                + "\n    JOIN Book on book_publisher.book_id=Book.id" \
+                + "\n    JOIN Publisher on Publisher.id=book_publisher.publisher_id" \
+                + "\n    JOIN book_order on book_order.book_id=book.id and book_order.publisher_id=Publisher.id" \
+                + "\n    JOIN Customer on customer.user_id=book_order.customer_id" \
+                + "\n    JOIN User on User.id=Customer.user_id"
+        # Restrict results based on user privileges
         if not self.is_admin:
             query += f"\n WHERE User.username='{self.username}'"
-        
 
+        # Fetch order details and set them in the table
         orders = list(db.engine.execute(text(query)))
 
         self.tableWidget_order.setRowCount(len(orders))
@@ -702,7 +754,7 @@ class Ui_MainWindow(object):
         for row in range(0, len(orders)):
 
             for col in range(0, 7):
-                
+
                 item = QtWidgets.QTableWidgetItem()
                 item.setTextAlignment(QtCore.Qt.AlignCenter)
                 self.tableWidget_order.setItem(row, col, item)
@@ -712,18 +764,19 @@ class Ui_MainWindow(object):
                 if col == 6:
                     item.setText(str('{:,}'.format(totalPrice)))
                 else:
-                    if col>3 and not col==6:
+                    if col > 3 and not col == 6:
                         item.setText(str('{:,}'.format(orders[row][col])))
                     else:
                         item.setText(str(orders[row][col]))
 
     # Fetch and populate user information in UI fields
     def fillInfo(self):
+        # Fetch user information from the database based on the username
         username = self.username
-        query = f"SELECT User.username, Customer.first_name, Customer.last_name, Customer.phone_number,"\
-                +"\n    Customer.address, User.password FROM User JOIN Customer"\
-                +f"\n    ON User.id=Customer.user_id Where User.username = '{username}'"
-        
+        query = f"SELECT User.username, Customer.first_name, Customer.last_name, Customer.phone_number," \
+                + "\n    Customer.address, User.password FROM User JOIN Customer" \
+                + f"\n    ON User.id=Customer.user_id Where User.username = '{username}'"
+
         infoData = list(db.engine.execute(text(query)))[0]
         self.initialInfo = [info for info in infoData]
 
@@ -745,22 +798,20 @@ class Ui_MainWindow(object):
             self.input_user_info_address.toPlainText(),
             self.input_user_info_password.text()
         ]
-       
+
         nochanges = newData == self.initialInfo
 
         if not nochanges:
             query = f"UPDATE User SET username='{newData[0]}', password='{newData[5]}' WHERE id='{self.user_id}'"
             db.engine.execute(text(query))
-            query = f"UPDATE Customer SET first_name='{newData[1]}', last_name='{newData[2]}',"\
-                    +f"\n   phone_number='{newData[3]}', address='{newData[4]}' WHERE Customer.user_id={self.user_id}"
+            query = f"UPDATE Customer SET first_name='{newData[1]}', last_name='{newData[2]}'," \
+                    + f"\n   phone_number='{newData[3]}', address='{newData[4]}' WHERE Customer.user_id={self.user_id}"
             db.engine.execute(text(query))
             self.OkMsgBox("information", "success", "user info updated!")
             self.initialInfo = newData
             self.setupUi(self.MainWindow)
         else:
             self.OkMsgBox("warning", "fail", "no changes detected!")
-            
-
 
     # layout functions
     def setupUi(self, MainWindow):
@@ -797,7 +848,7 @@ class Ui_MainWindow(object):
         self.gridLayout_5.setObjectName("gridLayout_5")
         # fill books
         self.fillBooks(self.base_query)
-  
+
         self.scrollArea_book_list.setWidget(self.scrollAreaWidgetContents)
         self.input_list_search = QtWidgets.QLineEdit(self.frame_list_main)
         self.input_list_search.setGeometry(QtCore.QRect(540, 20, 220, 24))
@@ -810,7 +861,8 @@ class Ui_MainWindow(object):
         # filter combo boxes
         self.bookCombo = QtWidgets.QComboBox(self.frame_list_main)
         self.bookCombo.setGeometry(QtCore.QRect(10, 20, 100, 20))
-        bookFilters = ['select filter', 'newest', 'oldest', 'most expensive', 'least expensive', 'most popular', 'least popular']
+        bookFilters = ['select filter', 'newest', 'oldest', 'most expensive', 'least expensive', 'most popular',
+                       'least popular']
         self.bookCombo.addItems(bookFilters)
         # publisher selection combo boxes
         self.pubCombo1 = QtWidgets.QComboBox(self.frame_list_main)
@@ -827,12 +879,11 @@ class Ui_MainWindow(object):
         self.button_list_show.setObjectName("button_list_show")
         # filter button event listener
         self.button_list_show.clicked.connect(lambda: self.bookFilter())
-      
+
         self.gridLayout_6.addWidget(self.frame_list_main, 0, 0, 1, 1)
         self.tabWidget.addTab(self.list, "")
         # -------------------------------------categories tab--------------------------------------------------------
         if self.is_admin:
-
             # -------------------------------------add publisher tab--------------------------------------------------------
             self.publisher = QtWidgets.QWidget()
             self.publisher.setObjectName("publisher")
@@ -910,7 +961,7 @@ class Ui_MainWindow(object):
             self.gridLayout_addbook_main.addWidget(self.input_publisher_name_2, 0, 1, 1, 1)
             self.input_publisher_author = QtWidgets.QLineEdit(self.add)
             self.input_publisher_author.setObjectName("input_publisher_author")
-            self.gridLayout_addbook_main.addWidget(self.input_publisher_author, 1, 1, 1, 1)      
+            self.gridLayout_addbook_main.addWidget(self.input_publisher_author, 1, 1, 1, 1)
             self.label_addbook_description = QtWidgets.QLabel(self.add)
             self.label_addbook_description.setObjectName("label_addbook_description")
             self.gridLayout_addbook_main.addWidget(self.label_addbook_description, 4, 0, 1, 1)
@@ -919,7 +970,7 @@ class Ui_MainWindow(object):
             self.gridLayout_addbook_main.addWidget(self.plainTextEdit_publisher_description, 4, 1, 1, 1)
             # publisher selection combo box
             self.select_addbook_publisher = QtWidgets.QComboBox(self.add)
-            self.select_addbook_publisher.setObjectName("select_addbook_publisher")       
+            self.select_addbook_publisher.setObjectName("select_addbook_publisher")
             self.select_addbook_publisher.addItems(publishers)
             self.gridLayout_addbook_main.addWidget(self.select_addbook_publisher, 5, 1, 1, 1)
 
@@ -970,7 +1021,7 @@ class Ui_MainWindow(object):
             self.input_addbook_picture = QtWidgets.QLineEdit(self.frame_addbook_picture)
             self.input_addbook_picture.setGeometry(QtCore.QRect(0, 10, 500, 21))
             self.input_addbook_picture.setMinimumSize(QtCore.QSize(500, 0))
-            self.input_addbook_picture.setObjectName("input_addbook_picture")      
+            self.input_addbook_picture.setObjectName("input_addbook_picture")
             self.gridLayout_addbook_main.addWidget(self.frame_addbook_picture, 7, 1, 1, 1)
             self.gridLayout_3.addLayout(self.gridLayout_addbook_main, 2, 0, 1, 1)
             self.label_addbook_title = QtWidgets.QLabel(self.add)
@@ -1206,15 +1257,16 @@ class Ui_MainWindow(object):
     def translateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Online_Shopping"))
-        # book tab   
+        # book tab
         self.button_list_search.setText(_translate("MainWindow", "🔍 Explore"))
         self.button_list_show.setText(_translate("MainWindow", "🎛️Criteria"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.list), _translate("MainWindow", "📘 Books"))
         # orders tab
         __sortingEnabled = self.tableWidget_order.isSortingEnabled()
-        self.tableWidget_order.setSortingEnabled(False)       
+        self.tableWidget_order.setSortingEnabled(False)
         self.tableWidget_order.setSortingEnabled(__sortingEnabled)
-        self.label_order_title.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:15pt; font-weight:700;\">Orders_List</span></p></body></html>"))
+        self.label_order_title.setText(_translate("MainWindow",
+                                                  "<html><head/><body><p align=\"center\"><span style=\" font-size:15pt; font-weight:700;\">Orders_List</span></p></body></html>"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.orders), _translate("MainWindow", "🛍️ Shopping_list"))
         if self.is_admin:
 
@@ -1222,35 +1274,54 @@ class Ui_MainWindow(object):
             self.label_publisher_number.setText(_translate("MainWindow", "Phone_Number"))
             self.label_publisher_web.setText(_translate("MainWindow", "Website_Link"))
             self.button_publisher_add.setText(_translate("MainWindow", "Add_To_Publisher_List"))
-            self.label_publisher_title.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:10pt; font-weight:700;\">Publisher_Info</span></p></body></html>"))
-            self.tabWidget.setTabText(self.tabWidget.indexOf(self.publisher), _translate("MainWindow", "📁 Insert_Publisher"))
+            self.label_publisher_title.setText(_translate("MainWindow",
+                                                          "<html><head/><body><p align=\"center\"><span style=\" font-size:10pt; font-weight:700;\">Publisher_Info</span></p></body></html>"))
+            self.tabWidget.setTabText(self.tabWidget.indexOf(self.publisher),
+                                      _translate("MainWindow", "📁 Insert_Publisher"))
             # add book tab
             # self.label_addbook_error.setText(_translate("MainWindow", "error"))
-            self.label_addbook_name.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Title</span></p></body></html>"))
-            self.label_addbook_picture.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Image</span></p></body></html>"))
-            self.label_addbook_author.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Author</span></p></body></html>"))
-            self.label_addbook_description.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Book_Summary</span></p><p align=\"center\"><br/></p></body></html>"))
-            self.label_addbook_quantity.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Quantity</span></p></body></html>"))
+            self.label_addbook_name.setText(_translate("MainWindow",
+                                                       "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Title</span></p></body></html>"))
+            self.label_addbook_picture.setText(_translate("MainWindow",
+                                                          "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Image</span></p></body></html>"))
+            self.label_addbook_author.setText(_translate("MainWindow",
+                                                         "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Author</span></p></body></html>"))
+            self.label_addbook_description.setText(_translate("MainWindow",
+                                                              "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Book_Summary</span></p><p align=\"center\"><br/></p></body></html>"))
+            self.label_addbook_quantity.setText(_translate("MainWindow",
+                                                           "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Quantity</span></p></body></html>"))
             self.button_addbook_submit.setText(_translate("MainWindow", "Add_To_Book_List"))
-            self.label_addbook_publisher.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Publisher</span></p></body></html>"))
-            self.label_addbook_price.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Price</span></p></body></html>"))
+            self.label_addbook_publisher.setText(_translate("MainWindow",
+                                                            "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Publisher</span></p></body></html>"))
+            self.label_addbook_price.setText(_translate("MainWindow",
+                                                        "<html><head/><body><p align=\"left\"><span style=\" font-size:12pt;\">Price</span></p></body></html>"))
             self.button_addbook_broswer.setText(_translate("MainWindow", "Explorer"))
-            self.label_addbook_title.setText(_translate("MainWindow", "<html><head/><body><p align=\"left\"><span style=\" font-size:20pt; font-weight:600;\">Insert_New_Books</span></p></body></html>"))
+            self.label_addbook_title.setText(_translate("MainWindow",
+                                                        "<html><head/><body><p align=\"left\"><span style=\" font-size:20pt; font-weight:600;\">Insert_New_Books</span></p></body></html>"))
             self.tabWidget.setTabText(self.tabWidget.indexOf(self.add), _translate("MainWindow", "📝 Insert_Book"))
             # users tab
             self.button_user_search.setText(_translate("MainWindow", "🔍 Explore"))
-            self.label_user_phone.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Phone_No.</span></p></body></html>"))
-            self.label_user_name.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">First_Name</span></p></body></html>"))
-            self.label_user_delete.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Delete</span></p></body></html>"))
-            self.label_user_lastname.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Last_Name</span></p></body></html>"))
-            self.label_user_username.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Username</span></p></body></html>"))
-            self.label_user_update.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Update</span></p></body></html>"))
-            self.label_user_address.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Address</span></p></body></html>"))
-            self.label_user_isadmin.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">IsAdmin</span></p></body></html>"))
+            self.label_user_phone.setText(_translate("MainWindow",
+                                                     "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Phone_No.</span></p></body></html>"))
+            self.label_user_name.setText(_translate("MainWindow",
+                                                    "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">First_Name</span></p></body></html>"))
+            self.label_user_delete.setText(_translate("MainWindow",
+                                                      "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Delete</span></p></body></html>"))
+            self.label_user_lastname.setText(_translate("MainWindow",
+                                                        "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Last_Name</span></p></body></html>"))
+            self.label_user_username.setText(_translate("MainWindow",
+                                                        "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Username</span></p></body></html>"))
+            self.label_user_update.setText(_translate("MainWindow",
+                                                      "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Update</span></p></body></html>"))
+            self.label_user_address.setText(_translate("MainWindow",
+                                                       "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">Address</span></p></body></html>"))
+            self.label_user_isadmin.setText(_translate("MainWindow",
+                                                       "<html><head/><body><p align=\"center\"><span style=\" font-weight:700;\">IsAdmin</span></p></body></html>"))
             self.button_user_show.setText(_translate("MainWindow", "🎛️Criteria"))
             self.tabWidget.setTabText(self.tabWidget.indexOf(self.users), _translate("MainWindow", "🚻 Members"))
             # inventory tab
-            self.label_inventory_title.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:13pt; font-weight:700;\">Book_Store_Info</span></p></body></html>"))
+            self.label_inventory_title.setText(_translate("MainWindow",
+                                                          "<html><head/><body><p align=\"center\"><span style=\" font-size:13pt; font-weight:700;\">Book_Store_Info</span></p></body></html>"))
             self.tabWidget.setTabText(self.tabWidget.indexOf(self.inventory), _translate("MainWindow", "📊 Stock"))
 
         else:
@@ -1268,15 +1339,17 @@ class Ui_MainWindow(object):
             self.label_user_info_password.setText(_translate("MainWindow", "Password"))
             # self.input_user_info_password.setText(_translate("MainWindow", "123456"))
             self.button_logout.setText(_translate("MainWindow", "Log out"))
-            self.label_login_username.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\"></span></p></body></html>"))
+            self.label_login_username.setText(_translate("MainWindow",
+                                                         "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\"></span></p></body></html>"))
             self.button_user_info_update.setText(_translate("MainWindow", "Update"))
-            self.label_user_info_title.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:700;\">Book_Store_Info</span></p></body></html>"))
+            self.label_user_info_title.setText(_translate("MainWindow",
+                                                          "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:700;\">Book_Store_Info</span></p></body></html>"))
             self.tabWidget.setTabText(self.tabWidget.indexOf(self.info), _translate("MainWindow", "🌐 Information"))
 
-        
         self.button_logout.setText(_translate("MainWindow", "🚪 Log_out"))
-        self.label_login_username.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\"></span></p></body></html>"))
-        self.label_login_username.setText("👤 "+str(self.username))
+        self.label_login_username.setText(_translate("MainWindow",
+                                                     "<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\"></span></p></body></html>"))
+        self.label_login_username.setText("👤 " + str(self.username))
 
         # check boxes text fill
         for bx in range(0, len(self.bookCatBoxes)):
