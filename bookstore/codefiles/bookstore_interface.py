@@ -1,3 +1,4 @@
+# Import necessary modules from PyQt5 and other libraries
 from PyQt5 import QtCore, QtWidgets, QtGui
 from codefiles.catalog import db
 from sqlalchemy import false, text
@@ -5,13 +6,12 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 import shutil,re,os,random
-
+# Define the main class for the User Interface
 class Ui_MainWindow(object):
     # main functions
-
-    # Base query for retrieving book information
+    # Constructor to initialize the User Interface and related variables
     def __init__(self, user_id, is_admin, username, MainWindow):
-
+        # Base query for retrieving book information
         self.base_query = "SELECT Book.name, book_publisher.quantity, Book.author, Book.price, Publisher.name,"\
                         +"\n    ifnull(book_order.quantity, 0) as ordcount, publisher.id, Book.id, Book.picture_url"\
                         +"\n    FROM book_publisher"\
@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
                         +"\n    JOIN Customer ON User.id=Customer.user_id"\
                         +"\n    LEFT JOIN book_order ON book_order.customer_id=User.id"\
                         +"\n    GROUP BY User.username"
-
+        # Initialize variables related to the main window
         self.MainWindow = MainWindow   
         self.user_id = user_id
         self.username = username
@@ -45,41 +45,53 @@ class Ui_MainWindow(object):
 
     # Logs out the user by setting up the login window.
     def logout(self):
+        # Import the login window UI class
         from codefiles.user_registration import Ui_LoginWindow
+        # Create an instance of the login window UI and set it up
         ui = Ui_LoginWindow()
         ui.setupUi(self.MainWindow)
-
+    # Logs out the user by setting up the login window.
     def logout(self):
+        # Import the login window UI class
         from codefiles.user_registration import Ui_LoginWindow
+        # Create an instance of the login window UI and set it up
         ui = Ui_LoginWindow()
         ui.setupUi(self.MainWindow)
 
     # Displays a message box with the specified type, title, and text.
     def OkMsgBox(self,type, title, text):
+        # Create a QMessageBox instance
         msg = QMessageBox()
+        # Set the icon based on the specified type (warning or information)
         if type == 'warning':
             msg.setIcon(QMessageBox.Warning)
         else:
             msg.setIcon(QMessageBox.Information)
+        # Set the text and title of the message box
         msg.setText(text)
         msg.setWindowTitle(title)
+        # Set standard buttons (only OK button in this case)
         msg.setStandardButtons(QMessageBox.Ok)
+        # Execute the message box
         msg.exec_()
 
     # Retrieves a list of publishers from the database.
     def getPublishers(self):
+        # SQL query to retrieve names of publishers from the database
         query = "SELECT name FROM Publisher"
+        # Execute the query and return a list of publisher names
         return [res[0] for res in list(db.engine.execute(text(query)))]
 
     # Dynamically places checkboxes for categories in the UI based on provided parameters.
     def placeCatBoxes(self, tab, x, y, w, h):
-
+        # SQL query to retrieve category names from the database
         query = "SELECT name FROM category"
         catResult = list(db.engine.execute(text(query)))
-
+        # Iterate through the list of category names
         for index, cat in enumerate(catResult):    
-
+            # Check if the checkboxes should be placed on the main tab (tab == 0)
             if tab == 0:          
+                # Adjust the position based on the index to create a grid layout
                 if index % 3 == 0:
                     x += 111
                     y = 18
@@ -87,44 +99,48 @@ class Ui_MainWindow(object):
                     y = 43
                 else:
                     y = 68       
-
+                # Create a checkbox and set its properties
                 self.bookCatBoxes.append(QtWidgets.QCheckBox(self.frame_list_main))
                 self.bookCatBoxes[index].setObjectName(cat[0])
                 self.bookCatBoxes[index].setGeometry(QtCore.QRect(x, y, w, h))
             else:  
+                # Adjust the position based on the index to create a grid layout
                 if index % 2 == 0:
                     x += 100
                     y = 2
                 else:
                     y = 32 
-
+                # Create a checkbox and set its properties
                 self.categoryBoxes.append(QtWidgets.QCheckBox(self.scrollAreaWidgetContents_addbook_main))
                 self.categoryBoxes[index].setObjectName(cat[0])           
                 self.categoryBoxes[index].setGeometry(QtCore.QRect(x, y, w, h))
 
     # Fills the UI with book information based on the provided query.
     def fillBooks(self, query):
-
+        # Lists to store buttons and other objects dynamically created
         detailBtns = []
         buyEditBtns = []
         deleteBtns = []
         self.bookObjects = []
         self.pictures = []
-
+        # Retrieve book information from the database based on the provided query
         books = list(db.engine.execute(text(query)))
-
+        # Iterate through each book and create UI elements for display
         for index, item in enumerate(books):
+            # Create a frame to contain book information
             self.bookObjects.append(QtWidgets.QFrame(self.scrollAreaWidgetContents))
             self.bookObjects[index].setMaximumSize(QtCore.QSize(485, 150))
             self.bookObjects[index].setFrameShape(QtWidgets.QFrame.StyledPanel)
             self.bookObjects[index].setFrameShadow(QtWidgets.QFrame.Raised)
             self.bookObjects[index].setObjectName("frame_list_" + str(index))
+            # Create a grid layout within the frame
             self.gridLayoutWidget = QtWidgets.QWidget(self.bookObjects[index])
             self.gridLayoutWidget.setGeometry(QtCore.QRect(9, 9, 471, 136))
             self.gridLayoutWidget.setObjectName("gridLayoutWidget")
             self.gridLayout_list_0 = QtWidgets.QGridLayout(self.gridLayoutWidget)
             self.gridLayout_list_0.setContentsMargins(0, 0, 0, 0)
             self.gridLayout_list_0.setObjectName("gridLayout_list_0")
+            # Create labels to display book information
             self.label_list_name_0 = QtWidgets.QLabel(self.gridLayoutWidget)
             self.label_list_name_0.setObjectName("label_list_name_0")
             self.gridLayout_list_0.addWidget(self.label_list_name_0, 0, 0, 1, 1)
@@ -141,13 +157,15 @@ class Ui_MainWindow(object):
             self.label_list_publisher_0.setObjectName("label_list_publisher_0")
             self.gridLayout_list_0.addWidget(self.label_list_publisher_0, 3, 0, 1, 1)
             # detail buttons
+            # Create detail buttons and connect them to the bookDetails method
             detailBtns.append(QtWidgets.QPushButton(self.gridLayoutWidget))
             detailBtns[index].setObjectName(str(item[7]))
             self.gridLayout_list_0.addWidget(detailBtns[index], 6, 0, 1, 1)
             detailBtns[index].clicked.connect(lambda ch, index=index: self.bookDetails(detailBtns[index].objectName()))
+            # Set the text and style for detail buttons
             detailBtns[index].setText("📖 Get Extra Information")
             detailBtns[index].setStyleSheet("#"+str(detailBtns[index].objectName())+" {color:purple;}")
-            # purchase/edit buttons
+            # Create purchase/edit buttons and connect them to the appropriate methods
             buyEditBtns.append(QtWidgets.QPushButton(self.gridLayoutWidget))
             buyEditBtns[index].setObjectName(str(item[7]) + '_' + str(item[6]))
             self.gridLayout_list_0.addWidget(buyEditBtns[index], 6, 2, 1, 1)
@@ -166,7 +184,7 @@ class Ui_MainWindow(object):
                 buyEditBtns[index].clicked.connect(lambda ch, index=index:
                             self.buyBook(buyEditBtns[index].objectName().split('_')[0], buyEditBtns[index].objectName().split('_')[1]))
                 buyEditBtns[index].setText("🛍️ Purchase")
-            # picture
+            # Create a QGraphicsView to display book pictures
             self.gridLayout_5.addWidget(self.bookObjects[index], index, 1, 1, 1)
             self.pictures.append(QtWidgets.QGraphicsView(self.scrollAreaWidgetContents))
             self.pictures[index].setMinimumSize(QtCore.QSize(220, 150))
@@ -175,9 +193,10 @@ class Ui_MainWindow(object):
             " { background-image: url(pictures/"+ item[8] +
             ");background-repeat: no-repeat;background-attachment: fixed;background-position: center;border:0px;}")
             # self.pictures[index].setStyleSheet("#list_picture_"+str(index)+" { background-image: url(pictures/book.jpeg);background-repeat: no-repeat;background-attachment: fixed;background-position: center;border:0px;}")
-            self.pictures[index].setObjectName("list_picture_" + str(index))        
+            self.pictures[index].setObjectName("list_picture_" + str(index))  
+            # Add the created UI elements to the main layout
             self.gridLayout_5.addWidget(self.pictures[index], index, 0, 1, 1)
-            # giving values
+            # Set values for the labels to display book information
             self.label_list_name_0.setText('📘 Title: ' + item[0])
             self.label_list_quantity_0.setText('📊  Number of Books available: ' + str('{:,}'.format(item[1])))
             self.label_list_author_0.setText('🖋️ Author: ' + item[2])
@@ -186,7 +205,9 @@ class Ui_MainWindow(object):
 
     # Displays detailed information about a book in a separate window.
     def bookDetails(self, book_id):
+        # Import the BookDetailWindow UI class
         from codefiles.Book_Details import Ui_BookDetailWindow
+        # Create an instance of the BookDetailWindow UI and set it up
         self.bookDetailUi = QtWidgets.QMainWindow()
         ui_book_detail = Ui_BookDetailWindow(book_id)
         ui_book_detail.setupUi(self.bookDetailUi)
@@ -194,12 +215,15 @@ class Ui_MainWindow(object):
 
     # Updates the main window of the application.
     def update_main_window(main_self):
+        # Update the main window UI
         self = main_self   
         self.setupUi(self.MainWindow)
 
     # Opens a window to edit book details.
     def editBook(self, book_id,MainWindow):
+        # Import the BookEditWindow UI class
         from codefiles.edit_books_features import Ui_BookEditWindow
+        # Create an instance of the BookEditWindow UI and set it up
         self.MainWindow = MainWindow
         self.bookEditUi = QtWidgets.QMainWindow()
         ui_book_detail = Ui_BookEditWindow(book_id,self)
@@ -209,53 +233,61 @@ class Ui_MainWindow(object):
         # Handles the process of buying a book:- Checks availability, Manages user orders, updates book quantity
         # Displays appropriate messages and refreshes the UI upon successful purchase
     def buyBook(self, book_id, publisher_id):
-        
+        # Query to check the quantity of the selected book
         query = "SELECT book_publisher.quantity FROM Book JOIN book_publisher"\
                 +"\n    ON Book.id=book_publisher.book_id"\
                 +f"\n   WHERE Book.id={book_id}"
         quantity = list(db.engine.execute(text(query)))[0][0]
-
+        # Query to retrieve the user ID based on the username
         query = f"SELECT User.id FROM User WHERE username='{self.username}'"
         user_id = list(db.engine.execute(text(query)))[0][0]
-
+        # Check if the book is available
         if quantity != 0:
+            # Check if the user has already ordered the book
             query = "SELECT book_order.quantity FROM book_order WHERE"\
                     +f"\n  book_order.book_id={book_id} and book_order.customer_id={user_id}"
             try:
                 userOrderQuantity = list(db.engine.execute(text(query)))[0][0]
+                # If the user has ordered the book, update the quantity
                 query = f"UPDATE book_order SET quantity={userOrderQuantity+1}"\
                        +f"\n  WHERE book_id={book_id} and customer_id={user_id}"
                 db.engine.execute(text(query))
                 self.OkMsgBox("information", "success", "order added sucessfully!")
             except:
+                # If the user has not ordered the book, add a new order entry
                 query = "INSERT INTO book_order(book_id, customer_id, publisher_id, quantity)"\
                        +f"\n  VALUES({book_id}, {user_id}, {publisher_id}, 1)"
                 db.engine.execute(text(query))
-
+            # Update the book quantity after a successful order
             query = f"UPDATE book_publisher SET quantity={quantity-1} WHERE book_id={book_id}"
             db.engine.execute(text(query))
             self.OkMsgBox("information", "order success", "Order added sucessfully!")
+            # Refresh the UI
             self.setupUi(self.MainWindow)
     
         else:
+             # Display a warning if the book is unavailable
             self.OkMsgBox("warning", "order fail", "Book is unavailable!")
 
     # Deletes a book and its related records from the database.
     def deleteBook(self, book_id):
+        # SQL queries to delete records related to the book from different tables
         queries = [
             f"DELETE FROM Book WHERE Book.id={book_id}",
             f"DELETE FROM book_publisher WHERE book_publisher.book_id={book_id}",
             f"DELETE FROM book_category WHERE book_category.book_id={book_id}",
             f"DELETE FROM book_order WHERE book_order.book_id={book_id}"
         ]
-
+        # Execute each deletion query
         for query in queries:
             db.engine.execute(text(query))
+        # Display success message, refresh the UI, and update the main window
         self.OkMsgBox("information", "success", "book deleted sucessfully!")
         self.setupUi(self.MainWindow)
 
     # Removes book-related UI objects from the main window.
     def removeBooks(self):
+        # Delete dynamically created UI objects related to books
         for obj in self.bookObjects:
             obj.deleteLater()
 
@@ -264,7 +296,9 @@ class Ui_MainWindow(object):
 
     # Searches for books based on the given input.
     def search(self, input):    
+        # Check if input is provided
         if input:
+            # Set the search input and filter books based on the input
             self.input_list_search.setText(input)
             self.bookSearch = f"Book.name LIKE '%{input}%' OR Book.author LIKE '%{input}%' OR Publisher.name LIKE '%{input}%'" 
             self.removeBooks()
@@ -272,6 +306,7 @@ class Ui_MainWindow(object):
             self.reloadFilters()
             
         else:
+            # If no input is provided, reset the search and display all books
             self.input_list_search.setText('')
             self.bookSearch = None
             self.removeBooks()
@@ -280,22 +315,22 @@ class Ui_MainWindow(object):
 
     # Filters books based on selected categories, filters, and publishers.
     def bookFilter(self):
-
+        # Lists to store selected categories
         selectedCategories = []
-
+        # Iterate through book category checkboxes to find selected ones
         for cat in self.bookCatBoxes:
             if cat.isChecked():
                 selectedCategories.append(cat.objectName())
-
+        # Get selected filter, publisher, and initialize a flag
         selectedFilter = self.bookCombo.currentText()
         selectedPublisher = self.pubCombo1.currentText()
 
         donothing = False
-
+        # Check if categories are selected
         if selectedCategories:
-
+            # Format the selected categories for SQL query
             convertedList = f"('{selectedCategories[0]}')" if len(selectedCategories) == 1 else tuple(selectedCategories)
-            
+            # Construct a query to filter books based on selected categories
             query = f"SELECT Book.name,book_publisher.quantity,Book.author,Book.price,Publisher.name,"\
                     +"\n    ifnull(book_order.quantity, 0) as ordcount, publisher.id, Book.id, Book.picture_url"\
                     +"\n    FROM book_category"\
@@ -305,27 +340,30 @@ class Ui_MainWindow(object):
                     +"\n    JOIN Publisher ON Publisher.id=book_publisher.publisher_id"\
                     +"\n    LEFT JOIN book_order ON book_order.book_id=book.id and book_order.publisher_id=Publisher.id"\
                     +f"\n   GROUP BY Book.id, Publisher.id HAVING Category.name IN {convertedList}"
-
+        # If no categories are selected, set the query to the base query
         else:
             query = self.base_query
+            # Check if no filter, publisher, or search is selected
             if selectedFilter == 'select filter' and selectedPublisher == 'select publisher':
                 donothing = True
+                 # If a search query exists, add it to the query
                 if self.bookSearch:                  
                     query = self.base_query + f"\n HAVING " +  self.bookSearch
                 else:
                     query = self.base_query
                
-
+        # Check if further actions are needed
         if not donothing:
+            # If a search query exists, add it to the query
             if self.bookSearch:
                 query += f" AND ({self.bookSearch})"
-        
+            # If a publisher is selected, add it to the query
             if selectedPublisher != 'select publisher':
                 if selectedCategories:
                     query += f" AND Publisher.name='{selectedPublisher}'"
                 else:
                     query += f"\n   HAVING Publisher.name='{selectedPublisher}'"
-
+            # If a filter is selected, add sorting to the query
             if selectedFilter != 'select filter':
                 if selectedFilter == 'most popular':
                     query += "\n ORDER BY ordcount DESC"
@@ -340,15 +378,16 @@ class Ui_MainWindow(object):
                 else:
                     query += "\n ORDER BY Book.date_added"
     
-        
+        # Remove existing book UI elements and fill the UI with filtered books
         self.removeBooks()
         self.fillBooks(query)
 
     # Resets filter options in the UI for books and publishers.
     def reloadFilters(self):
+        # Reset filter options to default values
         self.bookCombo.setCurrentText('select filter')
         self.pubCombo1.setCurrentText('select publisher')
-
+        # Uncheck all category checkboxes
         for cat in self.bookCatBoxes:
             cat.setChecked(False)
 
@@ -467,21 +506,22 @@ class Ui_MainWindow(object):
     # populates user-related information in the UI based on the query results.
     # Generates UI elements for each user, displaying their details and action buttons.
     def fillUsers(self, query):
+        # Fetch user information from the database based on the query
         users = list(db.engine.execute(text(query)))
-
+        # Lists to store dynamically created UI elements
         self.userObjects = []
         deleteButtons = []
         updateButtons = []
-    
+        # Iterate through each user and create UI elements
         for index, item in enumerate(users):   
-            
+            # Create a frame to hold user details and buttons
             self.userObjects.append(QtWidgets.QFrame(self.scrollAreaWidgetContents_user_main))
             self.userObjects[index].setMinimumSize(QtCore.QSize(839, 65))   
             self.userObjects[index].setMaximumSize(QtCore.QSize(839, 65)) 
             self.userObjects[index].setFrameShape(QtWidgets.QFrame.StyledPanel)
             self.userObjects[index].setFrameShadow(QtWidgets.QFrame.Raised)  
             self.userObjects[index].setObjectName("frame_user_" + str(index))
-
+            # Create a grid layout for the user details and buttons
             self.gridLayoutWidget_5 = QtWidgets.QWidget(self.userObjects[index])
             self.gridLayoutWidget_5.setGeometry(QtCore.QRect(10, 10, 821, 52))
             self.gridLayoutWidget_5.setObjectName("gridLayoutWidget_5")
@@ -489,7 +529,7 @@ class Ui_MainWindow(object):
             self.gridLayout_user_0 = QtWidgets.QGridLayout(self.gridLayoutWidget_5)
             self.gridLayout_user_0.setContentsMargins(0, 0, 0, 0)
             self.gridLayout_user_0.setObjectName("gridLayout_user_0")
-
+            # Create buttons for updating and deleting users
             updateButtons.append(QtWidgets.QPushButton(self.gridLayoutWidget_5))
             updateButtons[index].setMaximumSize(QtCore.QSize(55, 16777215))
             deleteButtons.append(QtWidgets.QPushButton(self.gridLayoutWidget_5))
@@ -555,7 +595,9 @@ class Ui_MainWindow(object):
 
     # Search for users based on input criteria
     def usersSearch(self, input):
+        # Check if input is provided
         if input:
+            # Set the search input and filter users based on the input
             self.input_user_search.setText(input)
             self.userSearch = f"User.username LIKE '%{input}%' OR Customer.first_name LIKE '%{input}%' OR Customer.last_name LIKE '%{input}%'" 
             self.removeUsers()
@@ -563,6 +605,7 @@ class Ui_MainWindow(object):
             self.usersCombo.setCurrentText('select filter')
             
         else:
+            # If no input is provided, reset the search and display all users
             self.input_user_search.setText('')
             self.userSearch = None
             self.removeUsers()
@@ -571,15 +614,15 @@ class Ui_MainWindow(object):
 
     # Apply filters to user data based on selected criteria
     def userFilter(self):
-        
+        # Get the selected filter option
         selectedFilter = self.usersCombo.currentText()
         query = self.user_query
-
+        # Set the base query or the query with search criteria
         if self.userSearch:
             q = query + "\n HAVING " +  self.userSearch
         else:
             q = query
-       
+        # Apply filters based on the selected option
         if selectedFilter != 'select filter':
             if selectedFilter == 'admin':
                 query = q + " AND User.is_admin=1" if self.userSearch else q + "\n  HAVING User.is_admin=1"                                        
@@ -591,7 +634,7 @@ class Ui_MainWindow(object):
                 query = q + "\n ORDER BY User.date_JOINed DESC"
             else:
                 query = q + "\n ORDER BY User.date_JOINed"
-
+        # Remove existing user objects and fill the UI with the updated query results
         self.removeUsers()
         self.fillUsers(query)
 
@@ -602,16 +645,16 @@ class Ui_MainWindow(object):
 
     # Delete a user from the database
     def deleteUser(self, id):     
-
+        # Prepare SQL queries to delete user-related records from the database
         queries = [
             f"DELETE FROM User WHERE id={id}",
             f"DELETE FROM Customer WHERE user_id={id}",
             f"DELETE FROM book_order WHERE customer_id={id}"
         ]
-
+        # Execute the queries
         for query in queries:
             db.engine.execute(text(query))
-
+        # Show a success message and update the UI
         # self.removeUsers()
         self.OkMsgBox("information", "success", "Great user deleted sucessfully!")
         self.setupUi(self.MainWindow)
@@ -619,20 +662,21 @@ class Ui_MainWindow(object):
 
     # Update user privilege based on action ('promote' or 'demote')
     def updateUser(self, action, id):
+        # Determine the new admin status based on the action
         is_admin = 1 if action == 'promote' else 0
-        
+        # Update the user's admin status in the database
         query = f"UPDATE User SET is_admin={is_admin} WHERE id={id}"
         db.engine.execute(text(query))
-
+        # Show a success message and update the UI
         self.OkMsgBox("information", "success", "Great user updates sucessfully!")
         self.removeUsers()
         self.fillUsers(self.user_query)
 
     # Fill in inventory data in the UI using various queries
     def fillInventory(self):
-        
+        # Lists to store dynamically created UI elements
         objects = []
-
+        # Titles and corresponding SQL queries for inventory data
         titles = [
             '📊 Books Count ',
             '📊 Count of Books Sold ',
@@ -652,14 +696,14 @@ class Ui_MainWindow(object):
             +"\n    WHERE book_order.date_added>=(SELECT DATETIME('now', '-30 day'))"
 
         ]
-
+        # Iterate through each inventory item and create UI elements
         for index in range(0, len(titles)):
 
             objects.append(QtWidgets.QFrame(self.verticalLayoutWidget))
             objects[index].setFrameShape(QtWidgets.QFrame.StyledPanel)
             objects[index].setFrameShadow(QtWidgets.QFrame.Raised)
             objects[index].setObjectName("frame_inventory")
-
+            # Create labels for inventory details
             self.label_inventory_title_0 = QtWidgets.QLabel(objects[index])
             self.label_inventory_title_0.setGeometry(QtCore.QRect(20, 10, 200, 41))
             self.label_inventory_title_0.setObjectName("label_inventory_title")
@@ -667,9 +711,9 @@ class Ui_MainWindow(object):
             self.label_inventory_0 = QtWidgets.QLabel(objects[index])
             self.label_inventory_0.setGeometry(QtCore.QRect(250, 10, 180, 40))
             self.label_inventory_0.setObjectName("label_inventory_0")
-
+            # Add the frame to the layout
             self.verticalLayout_inventory_main.addWidget(objects[index]) 
-
+            # Fetch and display the inventory data
             qResult = list(db.engine.execute(queries[index]))[0][0]
 
             self.label_inventory_title_0.setText(titles[index]) 
@@ -682,7 +726,7 @@ class Ui_MainWindow(object):
 
     # Fill the orders table in the UI based on user privileges
     def fillOrders(self):
-
+        # SQL query to fetch order details
         query = "SELECT Book.name, User.username, Publisher.name, book_order.date_added, book_order.quantity, Book.price"\
                 +"\n    FROM book_publisher"\
                 +"\n    JOIN Book on book_publisher.book_id=Book.id"\
@@ -690,11 +734,11 @@ class Ui_MainWindow(object):
                 +"\n    JOIN book_order on book_order.book_id=book.id and book_order.publisher_id=Publisher.id"\
                 +"\n    JOIN Customer on customer.user_id=book_order.customer_id"\
                 +"\n    JOIN User on User.id=Customer.user_id"
-        
+        # Restrict results based on user privileges
         if not self.is_admin:
             query += f"\n WHERE User.username='{self.username}'"
         
-
+        # Fetch order details and set them in the table
         orders = list(db.engine.execute(text(query)))
 
         self.tableWidget_order.setRowCount(len(orders))
@@ -719,6 +763,7 @@ class Ui_MainWindow(object):
 
     # Fetch and populate user information in UI fields
     def fillInfo(self):
+        # Fetch user information from the database based on the username
         username = self.username
         query = f"SELECT User.username, Customer.first_name, Customer.last_name, Customer.phone_number,"\
                 +"\n    Customer.address, User.password FROM User JOIN Customer"\
