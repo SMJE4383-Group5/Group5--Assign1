@@ -24,6 +24,7 @@ password : 123456
 
 
 # *Admin panel*
+![WhatsApp Image 2023-11-21 at 13 33 11_f27773bb](https://github.com/SMJE4383-Group5/Group5--Assign1/assets/111688027/d22b45fe-8624-4e6e-8e5d-4566d4a42d2c)
 
 
 # *User panel*
