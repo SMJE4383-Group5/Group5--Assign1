@@ -24,7 +24,8 @@ password : 123456
 * 
 # *user registration and login*
 ![USER REGISTRATION ](https://github.com/SMJE4383-Group5/Group5--Assign1/assets/111688027/03c81d8f-e5a7-4203-8ece-c3ad17715d3e)
-![SIGNUP](https://github.com/SMJE4383-Group5/Group5--Assign1/assets/111688027/faee1a0a-99bd-496a-8333-00d66c37f944)
+
+![SIGNUP](https://github.com/SMJE4383-Group5/Group5--Assign1/assets/111688027/cb466b0f-7385-46d0-9d3c-e9f5b7fd76ce)
 
 
 # *Admin panel*
