@@ -1,9 +1,7 @@
 # Online Book Store 
 1. download the libraries: 
 pip install -r requirements.txt
-2.
-To run the web: 
-python run un.py file 
+2.To run the web: Type in the terminal "python run.py" file 
 
 if user is admin 
 Login use these data: 
