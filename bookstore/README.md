@@ -35,10 +35,10 @@ password : 123456
 
 # *Admin panel*
 ![ADMIN PANEL](https://github.com/SMJE4383-Group5/Group5--Assign1/assets/111688027/8b49f26e-a6bc-4e1f-ab0f-6d12c2654eea)
-Edit a book info 
+# *Edit a book info* 
 ![8](https://github.com/SMJE4383-Group5/Group5--Assign1/assets/111688027/ba6e1294-8dae-4c19-a354-34aff988958f)
 
-if no changes added
+# *if no changes added*
 ![7](https://github.com/SMJE4383-Group5/Group5--Assign1/assets/111688027/f3faad42-cd1e-4ab4-87ab-96fd94f3a3af)
 
 # *add new book and publisher* 
